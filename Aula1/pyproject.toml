@@ -8,6 +8,8 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.13"
 ipython-unittest = "^0.3.2"
+# Manually install `openblas` on the system to use latest np
+numpy = "1.26.4"
 
 
 [tool.poetry.group.dev.dependencies]
