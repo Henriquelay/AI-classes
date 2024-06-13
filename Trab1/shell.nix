@@ -16,5 +16,5 @@ in
           scipy
         ]))
     ];
-    shellHook = "jupyter notebook";
+    shellHook = "jupyter notebook --NotebookApp.token='' --NotebookApp.password=''";
   }
