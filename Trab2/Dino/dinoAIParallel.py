@@ -8,34 +8,51 @@ pygame.init()
 
 # Valid values: HUMAN_MODE or AI_MODE
 GAME_MODE = "AI_MODE"
-RENDER_GAME = True
 
 # Global Constants
 SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 1100
-if RENDER_GAME:
-    SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoRun2.png"))]
-JUMPING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
-DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "DinoDuck1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoDuck2.png"))]
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(CURRENT_DIR, "Assets")
+ASSETS_DINO_DIR = os.path.join(ASSETS_DIR, "Dino")
 
-SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus3.png"))]
-LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus2.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus3.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus4.png"))]
+RUNNING = [
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoRun1.png")),
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoRun2.png")),
+]
+JUMPING = pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoJump.png"))
+DUCKING = [
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoDuck1.png")),
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoDuck2.png")),
+]
 
-BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
-        pygame.image.load(os.path.join("Assets/Bird", "Bird2.png"))]
+ASSETS_CACTUS_DIR = os.path.join(ASSETS_DIR, "Cactus")
 
-CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
+SMALL_CACTUS = [
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "SmallCactus1.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "SmallCactus2.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "SmallCactus3.png")),
+]
+LARGE_CACTUS = [
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus1.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus2.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus3.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus4.png")),
+]
 
-BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
+ASSETS_BIRD_DIR = os.path.join(ASSETS_DIR, "Bird")
+
+BIRD = [
+    pygame.image.load(os.path.join(ASSETS_BIRD_DIR, "Bird1.png")),
+    pygame.image.load(os.path.join(ASSETS_BIRD_DIR, "Bird2.png")),
+]
+
+ASSETS_OTHER_DIR = os.path.join(ASSETS_DIR, "Other")
+
+CLOUD = pygame.image.load(os.path.join(ASSETS_OTHER_DIR, "Cloud.png"))
+
+BG = pygame.image.load(os.path.join(ASSETS_OTHER_DIR, "Track.png"))
 
 
 class Dinosaur:
@@ -61,7 +78,11 @@ class Dinosaur:
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS
-        self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.color = (
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
+        )
 
     def update(self, userInput):
         if self.dino_duck and not self.dino_jump:
@@ -120,9 +141,17 @@ class Dinosaur:
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
-        pygame.draw.rect(SCREEN, self.color,
-                         (self.dino_rect.x, self.dino_rect.y, self.dino_rect.width, self.dino_rect.height), 2)
-
+        pygame.draw.rect(
+            SCREEN,
+            self.color,
+            (
+                self.dino_rect.x,
+                self.dino_rect.y,
+                self.dino_rect.width,
+                self.dino_rect.height,
+            ),
+            2,
+        )
 
     def getXY(self):
         return (self.dino_rect.x, self.dino_rect.y)
@@ -145,7 +174,7 @@ class Cloud:
         SCREEN.blit(self.image, (self.x, self.y))
 
 
-class Obstacle():
+class Obstacle:
     def __init__(self, image, type):
         super().__init__()
         self.image = image
@@ -156,7 +185,7 @@ class Obstacle():
 
     def update(self):
         self.rect.x -= game_speed
-        if self.rect.x < - self.rect.width:
+        if self.rect.x < -self.rect.width:
             obstacles.pop(0)
 
     def draw(self, SCREEN):
@@ -169,7 +198,7 @@ class Obstacle():
         return y_pos_bg - self.rect.y
 
     def getType(self):
-        return (self.type)
+        return self.type
 
 
 class SmallCactus(Obstacle):
@@ -211,7 +240,16 @@ class KeyClassifier:
     def __init__(self, state):
         pass
 
-    def keySelector(self, distance, obHeight, speed, obType, nextObDistance, nextObHeight, nextObType):
+    def keySelector(
+        self,
+        distance,
+        obHeight,
+        speed,
+        obType,
+        nextObDistance,
+        nextObHeight,
+        nextObType,
+    ):
         pass
 
     def updateState(self, state):
@@ -226,7 +264,16 @@ class KeySimplestClassifier(KeyClassifier):
     def __init__(self, state):
         self.state = state
 
-    def keySelector(self, distance, obHeight, speed, obType, nextObDistance, nextObHeight,nextObType):
+    def keySelector(
+        self,
+        distance,
+        obHeight,
+        speed,
+        obType,
+        nextObDistance,
+        nextObHeight,
+        nextObType,
+    ):
         self.state = sorted(self.state, key=first)
         for s, d in self.state:
             if speed < s:
@@ -254,13 +301,13 @@ def playerKeySelector():
         return "K_NO"
 
 
-def playGame(solutions):
+def playGame(initial_states, classifiercls=KeySimplestClassifier, render=False):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles
     run = True
 
     clock = pygame.time.Clock()
     cloud = Cloud()
-    font = pygame.font.Font('freesansbold.ttf', 20)
+    font = pygame.font.Font("freesansbold.ttf", 20)
 
     players = []
     players_classifier = []
@@ -276,9 +323,12 @@ def playGame(solutions):
     death_count = 0
     spawn_dist = 0
 
-    for solution in solutions:
+    if render:
+        SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    for initial_state in initial_states:
         players.append(Dinosaur())
-        players_classifier.append(KeySimplestClassifier(solution))
+        players_classifier.append(classifiercls(initial_state))
         solution_fitness.append(0)
         died.append(False)
 
@@ -288,12 +338,11 @@ def playGame(solutions):
         if points % 100 == 0:
             game_speed += 1
 
-        if RENDER_GAME:
+        if render:
             text = font.render("Points: " + str(int(points)), True, (0, 0, 0))
             textRect = text.get_rect()
             textRect.center = (1000, 40)
             SCREEN.blit(text, textRect)
-
 
     def background():
         global x_pos_bg, y_pos_bg
@@ -306,8 +355,10 @@ def playGame(solutions):
         x_pos_bg -= game_speed
 
     def statistics():
-        text_1 = font.render(f'Dinosaurs Alive:  {str(died.count(False))}', True, (0, 0, 0))
-        text_3 = font.render(f'Game Speed:  {str(game_speed)}', True, (0, 0, 0))
+        text_1 = font.render(
+            f"Dinosaurs Alive:  {str(died.count(False))}", True, (0, 0, 0)
+        )
+        text_3 = font.render(f"Game Speed:  {str(game_speed)}", True, (0, 0, 0))
 
         SCREEN.blit(text_1, (50, 450))
         SCREEN.blit(text_3, (50, 480))
@@ -318,10 +369,10 @@ def playGame(solutions):
                 run = False
                 exit()
 
-        if RENDER_GAME:
+        if render:
             SCREEN.fill((255, 255, 255))
 
-        for i,player in enumerate(players):
+        for i, player in enumerate(players):
             if not died[i]:
                 distance = 1500
                 nextObDistance = 2000
@@ -341,11 +392,19 @@ def playGame(solutions):
                     nextObHeight = obstacles[1].getHeight()
                     nextObType = obstacles[1]
 
-                userInput = players_classifier[i].keySelector(distance, obHeight, game_speed, obType, nextObDistance, nextObHeight,nextObType)
+                userInput = players_classifier[i].keySelector(
+                    distance,
+                    obHeight,
+                    game_speed,
+                    obType,
+                    nextObDistance,
+                    nextObHeight,
+                    nextObType,
+                )
 
                 player.update(userInput)
 
-                if RENDER_GAME:
+                if render:
                     player.draw(SCREEN)
 
         if len(obstacles) == 0 or obstacles[-1].getXY()[0] < spawn_dist:
@@ -359,11 +418,10 @@ def playGame(solutions):
 
         for obstacle in list(obstacles):
             obstacle.update()
-            if RENDER_GAME:
+            if render:
                 obstacle.draw(SCREEN)
 
-
-        if RENDER_GAME:
+        if render:
             background()
             statistics()
             cloud.draw(SCREEN)
@@ -372,7 +430,7 @@ def playGame(solutions):
 
         score()
 
-        if RENDER_GAME:
+        if render:
             clock.tick(60)
             pygame.display.update()
 
@@ -393,7 +451,7 @@ def change_state(state, position, vs, vd):
     nd = d + vd
     if ns < 15 or nd > 1000:
         return []
-    return aux[:position] + [(ns, nd)] + aux[position + 1:]
+    return aux[:position] + [(ns, nd)] + aux[position + 1 :]
 
 
 # Neighborhood
@@ -403,8 +461,12 @@ def generate_neighborhood(state):
     for i in range(state_size):
         ds = random.randint(1, 10)
         dd = random.randint(1, 100)
-        new_states = [change_state(state, i, ds, 0), change_state(state, i, (-ds), 0), change_state(state, i, 0, dd),
-                      change_state(state, i, 0, (-dd))]
+        new_states = [
+            change_state(state, i, ds, 0),
+            change_state(state, i, (-ds), 0),
+            change_state(state, i, 0, dd),
+            change_state(state, i, 0, (-dd)),
+        ]
         for s in new_states:
             if s != []:
                 neighborhood.append(s)
@@ -422,12 +484,12 @@ def gradient_ascent(state, max_time):
         better = False
 
         results = playGame(neighborhood)
-        for i,value in enumerate(results):
+        for i, value in enumerate(results):
             if value > max_value:
                 state = neighborhood[i]
                 max_value = value
                 better = True
-        '''
+        """
         for s in neighborhood:
             aiPlayer = KeySimplestClassifier(s)
             res, value = manyPlaysResults(3)
@@ -435,7 +497,7 @@ def gradient_ascent(state, max_time):
                 state = s
                 max_value = value
                 better = True
-        '''
+        """
         end = time.process_time()
     return state, max_value
 
@@ -443,7 +505,8 @@ def gradient_ascent(state, max_time):
 from scipy import stats
 import numpy as np
 
-def manyPlaysResultsTrain(rounds,solutions):
+
+def manyPlaysResultsTrain(rounds, solutions):
     results = []
 
     for round in range(rounds):
@@ -451,11 +514,13 @@ def manyPlaysResultsTrain(rounds,solutions):
 
     npResults = np.asarray(results)
 
-    mean_results = np.mean(npResults,axis = 0) - np.std(npResults,axis=0) # axis 0 calcula media da coluna
+    mean_results = np.mean(npResults, axis=0) - np.std(
+        npResults, axis=0
+    )  # axis 0 calcula media da coluna
     return mean_results
 
 
-def manyPlaysResultsTest(rounds,best_solution):
+def manyPlaysResultsTest(rounds, best_solution):
     results = []
     for round in range(rounds):
         results += [playGame([best_solution])[0]]
@@ -472,5 +537,5 @@ def main():
     npRes = np.asarray(res)
     print(res, npRes.mean(), npRes.std(), value)
 
-
-main()
+if __name__ == "__main__":
+    main()

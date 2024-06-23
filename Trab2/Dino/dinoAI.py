@@ -9,7 +9,7 @@ pygame.init()
 # Valid values: HUMAN_MODE or AI_MODE
 GAME_MODE = "AI_MODE"
 # GAME_MODE = "HUMAN_MODE"
-RENDER_GAME = True
+RENDER_GAME = False
 
 # Global Constants
 SCREEN_HEIGHT = 600
@@ -17,26 +17,46 @@ SCREEN_WIDTH = 1100
 if RENDER_GAME:
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoRun2.png"))]
-JUMPING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
-DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "DinoDuck1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoDuck2.png"))]
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(CURRENT_DIR, "Assets")
+ASSETS_DINO_DIR = os.path.join(ASSETS_DIR, "Dino")
 
-SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus3.png"))]
-LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus2.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus3.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus4.png"))]
+RUNNING = [
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoRun1.png")),
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoRun2.png")),
+]
+JUMPING = pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoJump.png"))
+DUCKING = [
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoDuck1.png")),
+    pygame.image.load(os.path.join(ASSETS_DINO_DIR, "DinoDuck2.png")),
+]
 
-BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
-        pygame.image.load(os.path.join("Assets/Bird", "Bird2.png"))]
+ASSETS_CACTUS_DIR = os.path.join(ASSETS_DIR, "Cactus")
 
-CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
+SMALL_CACTUS = [
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "SmallCactus1.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "SmallCactus2.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "SmallCactus3.png")),
+]
+LARGE_CACTUS = [
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus1.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus2.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus3.png")),
+    pygame.image.load(os.path.join(ASSETS_CACTUS_DIR, "LargeCactus4.png")),
+]
 
-BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
+ASSETS_BIRD_DIR = os.path.join(ASSETS_DIR, "Bird")
+
+BIRD = [
+    pygame.image.load(os.path.join(ASSETS_BIRD_DIR, "Bird1.png")),
+    pygame.image.load(os.path.join(ASSETS_BIRD_DIR, "Bird2.png")),
+]
+
+ASSETS_OTHER_DIR = os.path.join(ASSETS_DIR, "Other")
+
+CLOUD = pygame.image.load(os.path.join(ASSETS_OTHER_DIR, "Cloud.png"))
+
+BG = pygame.image.load(os.path.join(ASSETS_OTHER_DIR, "Track.png"))
 
 
 class Dinosaur:
@@ -142,7 +162,7 @@ class Cloud:
         SCREEN.blit(self.image, (self.x, self.y))
 
 
-class Obstacle():
+class Obstacle:
     def __init__(self, image, type):
         super().__init__()
         self.image = image
@@ -153,7 +173,7 @@ class Obstacle():
 
     def update(self):
         self.rect.x -= game_speed
-        if self.rect.x < - self.rect.width:
+        if self.rect.x < -self.rect.width:
             obstacles.pop(0)
 
     def draw(self, SCREEN):
@@ -166,7 +186,7 @@ class Obstacle():
         return y_pos_bg - self.rect.y
 
     def getType(self):
-        return (self.type)
+        return self.type
 
 
 class SmallCactus(Obstacle):
@@ -208,7 +228,16 @@ class KeyClassifier:
     def __init__(self, state):
         pass
 
-    def keySelector(self, distance, obHeight, speed, obType, nextObDistance, nextObHeight, nextObType):
+    def keySelector(
+        self,
+        distance,
+        obHeight,
+        speed,
+        obType,
+        nextObDistance,
+        nextObHeight,
+        nextObType,
+    ):
         pass
 
     def updateState(self, state):
@@ -223,7 +252,16 @@ class KeySimplestClassifier(KeyClassifier):
     def __init__(self, state):
         self.state = state
 
-    def keySelector(self, distance, obHeight, speed, obType, nextObDistance, nextObHeight,nextObType):
+    def keySelector(
+        self,
+        distance,  # Distância do dino até o próximo obstáculo
+        obHeight,  # Altura do próximo obstáculo
+        speed,  # Velocidade atual do jogo
+        obType,  # Tipo de obstáculo que pode ser SmallCactus, LargeCactus ou Bird tendo este último três variações de altura baixo,médio e alto.
+        nextObDistance,  # Distância até o segundo próximo obstáculo
+        nextObHeight,  # Altura do segundo próximo obstáculo
+        nextObType,  # Tipo do segundo próximo obstáculo
+    ):
         self.state = sorted(self.state, key=first)
         for s, d in self.state:
             if speed < s:
@@ -251,13 +289,13 @@ def playerKeySelector():
         return "K_NO"
 
 
-def playGame():
+def playGame(aiPlayer):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles
     run = True
 
     clock = pygame.time.Clock()
     cloud = Cloud()
-    font = pygame.font.Font('freesansbold.ttf', 20)
+    font = pygame.font.Font("freesansbold.ttf", 20)
 
     player = Dinosaur()
     game_speed = 10
@@ -280,7 +318,6 @@ def playGame():
             textRect = text.get_rect()
             textRect.center = (1000, 40)
             SCREEN.blit(text, textRect)
-
 
     def background():
         global x_pos_bg, y_pos_bg
@@ -322,8 +359,15 @@ def playGame():
         if GAME_MODE == "HUMAN_MODE":
             userInput = playerKeySelector()
         else:
-            userInput = aiPlayer.keySelector(distance, obHeight, game_speed, obType, nextObDistance, nextObHeight,
-                                             nextObType)
+            userInput = aiPlayer.keySelector(
+                distance,
+                obHeight,
+                game_speed,
+                obType,
+                nextObDistance,
+                nextObHeight,
+                nextObType,
+            )
 
         if len(obstacles) == 0 or obstacles[-1].getXY()[0] < spawn_dist:
             spawn_dist = random.randint(0, 670)
@@ -343,7 +387,6 @@ def playGame():
             obstacle.update()
             if RENDER_GAME:
                 obstacle.draw(SCREEN)
-
 
         if RENDER_GAME:
             background()
@@ -373,7 +416,7 @@ def change_state(state, position, vs, vd):
     nd = d + vd
     if ns < 15 or nd > 1000:
         return []
-    return aux[:position] + [(ns, nd)] + aux[position + 1:]
+    return aux[:position] + [(ns, nd)] + aux[position + 1 :]
 
 
 # Neighborhood
@@ -383,8 +426,12 @@ def generate_neighborhood(state):
     for i in range(state_size):
         ds = random.randint(1, 10)
         dd = random.randint(1, 100)
-        new_states = [change_state(state, i, ds, 0), change_state(state, i, (-ds), 0), change_state(state, i, 0, dd),
-                      change_state(state, i, 0, (-dd))]
+        new_states = [
+            change_state(state, i, ds, 0),
+            change_state(state, i, (-ds), 0),
+            change_state(state, i, 0, dd),
+            change_state(state, i, 0, (-dd)),
+        ]
         for s in new_states:
             if s != []:
                 neighborhood.append(s)
@@ -392,9 +439,9 @@ def generate_neighborhood(state):
 
 
 # Gradiente Ascent
-def gradient_ascent(state, max_time):
+def gradient_ascent(state, max_time, aiPlayer):
     start = time.process_time()
-    res, max_value = manyPlaysResults(3)
+    res, max_value = manyPlaysResults(3, aiPlayer)
     better = True
     end = 0
     while better and end - start <= max_time:
@@ -402,7 +449,7 @@ def gradient_ascent(state, max_time):
         better = False
         for s in neighborhood:
             aiPlayer = KeySimplestClassifier(s)
-            res, value = manyPlaysResults(3)
+            res, value = manyPlaysResults(3, aiPlayer)
             if value > max_value:
                 state = s
                 max_value = value
@@ -415,24 +462,23 @@ from scipy import stats
 import numpy as np
 
 
-def manyPlaysResults(rounds):
+def manyPlaysResults(rounds, player):
     results = []
     for round in range(rounds):
-        results += [playGame()]
+        results += [playGame(player)]
     npResults = np.asarray(results)
     return (results, npResults.mean() - npResults.std())
 
 
 def main():
-    global aiPlayer
-
     initial_state = [(15, 250), (18, 350), (20, 450), (1000, 550)]
     aiPlayer = KeySimplestClassifier(initial_state)
-    best_state, best_value = gradient_ascent(initial_state, 5000)
+    best_state, best_value = gradient_ascent(initial_state, 5000, aiPlayer)
     aiPlayer = KeySimplestClassifier(best_state)
-    res, value = manyPlaysResults(30)
+    res, value = manyPlaysResults(30, aiPlayer)
     npRes = np.asarray(res)
     print(res, npRes.mean(), npRes.std(), value)
 
 
-main()
+if __name__ == "__main__":
+    main()
