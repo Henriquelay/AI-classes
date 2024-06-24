@@ -12,8 +12,9 @@ in
           pygame
           # jupyter
           # pandas
-          # matplotlib
-          # seaborn
+          matplotlib
+          seaborn
+          scikit-learn
         ]))
     ];
     shellHook = ''
