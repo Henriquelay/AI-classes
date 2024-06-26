@@ -1,3 +1,5 @@
+from typing import Type
+
 import pygame
 import os
 import random
@@ -249,7 +251,7 @@ class KeyClassifier:
         nextObDistance,
         nextObHeight,
         nextObType,
-    ):
+    ) -> str:
         pass
 
     def updateState(self, state):
@@ -301,7 +303,11 @@ def playerKeySelector():
         return "K_NO"
 
 
-def playGame(initial_states, classifiercls=KeySimplestClassifier, render=False):
+def playGame(
+    initial_states,
+    classifiercls: Type[KeyClassifier] = KeySimplestClassifier,
+    render=False,
+):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles
     run = True
 
@@ -506,11 +512,13 @@ from scipy import stats
 import numpy as np
 
 
-def manyPlaysResultsTrain(rounds, solutions):
+def manyPlaysResultsTrain(
+    rounds, solutions, classifiercls: Type[KeyClassifier] = KeySimplestClassifier
+):
     results = []
 
     for round in range(rounds):
-        results += [playGame(solutions)]
+        results += [playGame(solutions, classifiercls)]
 
     npResults = np.asarray(results)
 
@@ -520,22 +528,24 @@ def manyPlaysResultsTrain(rounds, solutions):
     return mean_results
 
 
-def manyPlaysResultsTest(rounds, best_solution):
+def manyPlaysResultsTest(
+    rounds, best_solution, classifiercls: Type[KeyClassifier] = KeySimplestClassifier
+):
     results = []
     for round in range(rounds):
-        results += [playGame([best_solution])[0]]
+        results += [playGame([best_solution], classifiercls)[0]]
 
     npResults = np.asarray(results)
     return (results, npResults.mean() - npResults.std())
 
 
 def main():
-
     initial_state = [(15, 250), (18, 350), (20, 450), (1000, 550)]
     best_state, best_value = gradient_ascent(initial_state, 5000)
     res, value = manyPlaysResultsTest(30, best_state)
     npRes = np.asarray(res)
     print(res, npRes.mean(), npRes.std(), value)
+
 
 if __name__ == "__main__":
     main()
