@@ -5,6 +5,8 @@ from typing import Any
 from random import random as random_float
 from dataclasses import dataclass
 
+from multiprocessing import Pool
+
 
 import numpy as np
 
@@ -177,7 +179,7 @@ class SimulatedAnnealing:
         cooling_rate=0.003,
         states_per_iter=100,
         neural_network=NeuralNetwork,
-        rounds_mean=3,
+        rounds_mean=10,
     ):
         self.initial_state = initial_state
         self.temperature = temperature
@@ -305,15 +307,35 @@ if __name__ == "__main__":
 
     state = State(input_weights, hidden_weights, biases)
     # Train
-    best_state, energy_history = SimulatedAnnealing(state).anneal()
+    # best_state, energy_history = SimulatedAnnealing(state).anneal()
 
-    def NnWithPrint(state):
-        return NeuralNetwork(state, _print=True)
+    params = {
+        "temperature": range(50, 250, 20),
+        "cooling_rate": range(3, 300, 30),  # / 10000
+    }
+    params_list = [
+        {"temperature": t, "cooling_rate": c / 10000}
+        for t in params["temperature"]
+        for c in params["cooling_rate"]
+    ]
 
-    print(playGame([best_state], NnWithPrint, render=True))
+    def run_simulated_annealing(params):
+        best_state, energy_history = SimulatedAnnealing(state, **params).anneal()
+        # return playGame([best_state], NeuralNetwork, render=False), best_state, params
+        return best_state, energy_history[-1], params
 
-    hiscore = max(energy_history)
-    print(f"Hiscore: {hiscore}")
+    with Pool() as p:
+        good_states = p.map(run_simulated_annealing, params_list)
+        best_state = max(good_states, key=lambda x: x[1])[0]
+        print(good_states)
+
+    # def NnWithPrint(state):
+    #     return NeuralNetwork(state, _print=True)
+
+    # print(playGame([best_state], NnWithPrint, render=True))
+
+    # hiscore = max(energy_history)
+    # print(f"Hiscore: {hiscore}")
 
     my_results = manyPlaysResultsTest(30, best_state, NeuralNetwork)
 
@@ -353,6 +375,5 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    sns.boxplot(my_results, x="my")
-    sns.boxplot(prof_result, x="prof")
+    sns.boxplot(data={"mine": my_results, "prof": prof_result})
     plt.show()
