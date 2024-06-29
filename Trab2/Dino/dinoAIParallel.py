@@ -1,10 +1,11 @@
-from typing import Type
-
-import pygame
 import os
 import random
 import time
 from sys import exit
+from typing import Any, Callable, Type
+
+import pygame
+import numpy as np
 
 pygame.init()
 
@@ -305,7 +306,8 @@ def playerKeySelector():
 
 def playGame(
     initial_states,
-    classifiercls: Type[KeyClassifier] = KeySimplestClassifier,
+    classifiercls: Type[KeyClassifier]
+    | Callable[[Any], KeyClassifier] = KeySimplestClassifier,
     render=False,
 ):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles
@@ -326,7 +328,6 @@ def playGame(
     points = 0
 
     obstacles = []
-    death_count = 0
     spawn_dist = 0
 
     if render:
@@ -442,7 +443,7 @@ def playGame(
 
         for obstacle in obstacles:
             for i, player in enumerate(players):
-                if player.dino_rect.colliderect(obstacle.rect) and died[i] == False:
+                if player.dino_rect.colliderect(obstacle.rect) and died[i] is False:
                     solution_fitness[i] = points
                     died[i] = True
 
@@ -482,7 +483,7 @@ def generate_neighborhood(state):
 # Gradiente Ascent
 def gradient_ascent(state, max_time):
     start = time.process_time()
-    res, max_value = manyPlaysResultsTest(3, state)
+    _, max_value = manyPlaysResultsTest(3, state)
     better = True
     end = 0
     while better and end - start <= max_time:
@@ -508,10 +509,6 @@ def gradient_ascent(state, max_time):
     return state, max_value
 
 
-from scipy import stats
-import numpy as np
-
-
 def manyPlaysResultsTrain(
     rounds, solutions, classifiercls: Type[KeyClassifier] = KeySimplestClassifier
 ):
@@ -531,9 +528,7 @@ def manyPlaysResultsTrain(
 def manyPlaysResultsTest(
     rounds, best_solution, classifiercls: Type[KeyClassifier] = KeySimplestClassifier
 ):
-    results = []
-    for round in range(rounds):
-        results += [playGame([best_solution], classifiercls)[0]]
+    results = [playGame([best_solution], classifiercls)[0] for _ in range(rounds)]
 
     npResults = np.asarray(results)
     return (results, npResults.mean() - npResults.std())
@@ -541,7 +536,7 @@ def manyPlaysResultsTest(
 
 def main():
     initial_state = [(15, 250), (18, 350), (20, 450), (1000, 550)]
-    best_state, best_value = gradient_ascent(initial_state, 5000)
+    best_state, _ = gradient_ascent(initial_state, 5000)
     res, value = manyPlaysResultsTest(30, best_state)
     npRes = np.asarray(res)
     print(res, npRes.mean(), npRes.std(), value)

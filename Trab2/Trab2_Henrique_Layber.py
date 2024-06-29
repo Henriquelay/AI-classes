@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from random import random as random_float
+from random import random as random_float, seed
 from dataclasses import dataclass
 
 from multiprocessing import Pool
@@ -67,10 +67,6 @@ def squish_01(x: float) -> float:
 
 
 class NeuralNetwork(KeyClassifier):
-    """
-    The domain for weights is kept [0, 1]
-    """
-
     def __init__(self, state: State, activation_threshold=0.55, _print=False):
         # print(state)
         self.input_weights = state.input_weights
@@ -80,8 +76,6 @@ class NeuralNetwork(KeyClassifier):
         self._print = _print
 
     def feedforward(self, inputs: np.ndarray[Any, np.dtype[np.float64]]) -> float:
-        """Weights is what will be searched for by the simulated annealing algorithm."""
-
         def sigmoid(x):
             return 1 / (1 + np.exp(-x))
 
@@ -140,6 +134,57 @@ class NeuralNetwork(KeyClassifier):
             return "K_DOWN"
 
 
+class SmallNeuralNetwork(NeuralNetwork):
+    input_nodes = 4
+    hidden_nodes = 2
+    output_nodes = 1
+
+    def keySelector(
+        self,
+        distance,
+        obHeight,
+        speed,
+        obType,
+        nextObDistance,
+        nextObHeight,
+        nextObType,
+    ):
+        # Normalizing and treating inputs
+        obType = normalize_obstable(obType)
+        nextObType = normalize_obstable(nextObType)
+        # Distance can be <0 when the first onscreen obstacle is behind Dino.
+        # As I believe this is not relevant for the classifier, I clamp it down.
+        distance = relu(distance)
+
+        # print(f"{speed=} {distance=} {nextObDistance=} {obHeight=} {nextObHeight}")
+        # speed = squish_01(speed)
+        # nextObDistance = squish_01(nextObDistance)
+        # obHeight = squish_01(obHeight)
+        # nextObHeight = squish_01(nextObHeight)
+        # distance = squish_01(distance)
+
+        prediction = self.feedforward(
+            np.array(
+                [
+                    distance,
+                    obHeight,
+                    speed,
+                    obType,
+                ],
+                dtype=np.float64,
+            )
+        )
+
+        if prediction >= self.activation_threshold:
+            if self._print:
+                print(f"{prediction:08.6f}🔼")
+            return "K_UP"
+        else:
+            if self._print:
+                print(f"{prediction:08.6f}🔽")
+            return "K_DOWN"
+
+
 class TestClassifier(KeyClassifier):
     """
     The domain for weights is kept [0, 1]
@@ -174,9 +219,9 @@ class SimulatedAnnealing:
     def __init__(
         self,
         initial_state: State,
-        temperature=80,
+        temperature=100,
         max_iter=1000,
-        cooling_rate=0.003,
+        cooling_rate=0.005,
         states_per_iter=100,
         neural_network=NeuralNetwork,
         rounds_mean=10,
@@ -194,12 +239,6 @@ class SimulatedAnnealing:
         """
         Probability of accepting a worse solution.
         """
-
-        # TODO Float comparison, but it's fine for now since most collision are either
-        # at 24 or at 24.5, that's a huge difference
-        if energy == new_energy:
-            return 0
-
         delta = abs(energy - new_energy)
         metropolis = np.exp(-delta / self.temperature)
 
@@ -210,16 +249,12 @@ class SimulatedAnnealing:
     def derive_state(self, state: State) -> State:
         def perturb(weight: float) -> float:
             def perturbation() -> float:
-                # Random float centered on 0 with magnitude <= 2
-                p = (random_float() - 0.5) * 2
-                # print(f"generated {p}")
                 damper = self.temperature / (self.temperature + 1)
-                # print(f"{damper=}")
-                return p * damper
+                return np.random.uniform(-damper, damper)
 
             p = perturbation()
             # print(f"{p=}")
-            result = weight + p
+            result = weight + self.temperature * p
             return result
 
         input_weights = np.array(
@@ -231,8 +266,8 @@ class SimulatedAnnealing:
         biases = (perturb(state.biases[0]), perturb(state.biases[1]))
 
         new_state = State(input_weights, hidden_weights, biases)
-        # print(new_state)
-        # print(f"On temperature {self.temperature}")
+        print(new_state)
+        print(f"On temperature {self.temperature}")
         return new_state
 
     def score_to_energy(self, score: float) -> float:
@@ -240,6 +275,12 @@ class SimulatedAnnealing:
 
     def boltzmann_cooling(self, epoch: int):
         self.temperature = self.initial_temperature / np.log(epoch + 2)
+
+    def exponential_cooling(self, _):
+        self.temperature = self.temperature * (1 - self.cooling_rate)
+
+    def geometric_cooling(self, epoch: int):
+        self.temperature = self.initial_temperature / (1 + epoch * self.cooling_rate)
 
     def anneal(self):
         """
@@ -256,8 +297,8 @@ class SimulatedAnnealing:
         (outliers and randomness).
         """
 
-        current_state = self.initial_state
-        current_energy = self.score_to_energy(
+        best_state = current_state = self.initial_state
+        best_energy = current_energy = self.score_to_energy(
             manyPlaysResultsTrain(
                 self.rounds_mean, [self.initial_state], self.neural_network
             )[0]
@@ -289,55 +330,60 @@ class SimulatedAnnealing:
                 or self.metropolis(current_energy, new_energy) > random_float()
             ):
                 current_state = states[champion_idx]
-                print(f"{current_state=}")
+                # print(f"{current_state=}")
                 current_energy = new_energy
                 energy_history.append(current_energy)
+                if new_energy > best_energy:
+                    best_state = current_state
+                    best_energy = current_energy
 
             # Cool down
-            self.boltzmann_cooling(epoch)
-        return current_state, energy_history
+            self.exponential_cooling(epoch)
+        return best_state, energy_history
 
 
 if __name__ == "__main__":
-    # print(playGame([None], TestClassifier, render=True))
+    # To make results comparable
+    seed(0)
+    np.random.seed(0)
 
-    input_weights = np.random.rand(7, 4)
-    hidden_weights = np.random.rand(4, 1)
-    biases = (random_float(), random_float())
+    # input_weights = np.random.rand(7, 4)
+    # hidden_weights = np.random.rand(4, 1)
+    # biases = (random_float(), random_float())
 
-    state = State(input_weights, hidden_weights, biases)
-    # Train
+    # state = State(input_weights, hidden_weights, biases)
+    # # Train
     # best_state, energy_history = SimulatedAnnealing(state).anneal()
-
-    params = {
-        "temperature": range(50, 250, 20),
-        "cooling_rate": range(3, 300, 30),  # / 10000
-    }
-    params_list = [
-        {"temperature": t, "cooling_rate": c / 10000}
-        for t in params["temperature"]
-        for c in params["cooling_rate"]
-    ]
-
-    def run_simulated_annealing(params):
-        best_state, energy_history = SimulatedAnnealing(state, **params).anneal()
-        # return playGame([best_state], NeuralNetwork, render=False), best_state, params
-        return best_state, energy_history[-1], params
-
-    with Pool() as p:
-        good_states = p.map(run_simulated_annealing, params_list)
-        best_state = max(good_states, key=lambda x: x[1])[0]
-        print(good_states)
 
     # def NnWithPrint(state):
     #     return NeuralNetwork(state, _print=True)
 
     # print(playGame([best_state], NnWithPrint, render=True))
 
-    # hiscore = max(energy_history)
-    # print(f"Hiscore: {hiscore}")
+    input_weights = np.random.rand(
+        SmallNeuralNetwork.input_nodes, SmallNeuralNetwork.hidden_nodes
+    )
+    hidden_weights = np.random.rand(
+        SmallNeuralNetwork.hidden_nodes, SmallNeuralNetwork.output_nodes
+    )
+    biases = (random_float(), random_float())
 
-    my_results = manyPlaysResultsTest(30, best_state, NeuralNetwork)
+    state = State(input_weights, hidden_weights, biases)
+    # Train
+    best_state, energy_history = SimulatedAnnealing(
+        state, neural_network=SmallNeuralNetwork
+    ).anneal()
+
+    def SmallNnWithPrint(state):
+        return SmallNeuralNetwork(state, _print=True)
+
+    print(playGame([best_state], SmallNnWithPrint, render=True))
+
+    hiscore = max(energy_history)
+    print(f"Hiscore: {hiscore}")
+
+    my_results, my_score = manyPlaysResultsTest(30, best_state, NeuralNetwork)
+    print(f"{my_score=}")
 
     prof_result = [
         1214.0,
