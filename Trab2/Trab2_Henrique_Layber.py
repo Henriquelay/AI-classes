@@ -344,8 +344,8 @@ class SimulatedAnnealing:
 
 if __name__ == "__main__":
     # To make results comparable
-    seed(0)
-    np.random.seed(0)
+    # seed(0)
+    # np.random.seed(0)
 
     # input_weights = np.random.rand(7, 4)
     # hidden_weights = np.random.rand(4, 1)
@@ -371,7 +371,7 @@ if __name__ == "__main__":
     state = State(input_weights, hidden_weights, biases)
     # Train
     best_state, energy_history = SimulatedAnnealing(
-        state, neural_network=SmallNeuralNetwork
+        state, neural_network=SmallNeuralNetwork, max_iter=1000
     ).anneal()
 
     def SmallNnWithPrint(state):
@@ -382,7 +382,7 @@ if __name__ == "__main__":
     hiscore = max(energy_history)
     print(f"Hiscore: {hiscore}")
 
-    my_results, my_score = manyPlaysResultsTest(30, best_state, NeuralNetwork)
+    my_results, my_score = manyPlaysResultsTest(30, best_state, SmallNeuralNetwork)
     print(f"{my_score=}")
 
     prof_result = [
