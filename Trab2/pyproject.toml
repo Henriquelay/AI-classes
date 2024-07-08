@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = ""
+authors = ["Henrique Layber <37563861+Henriquelay@users.noreply.github.com>"]
+license = "The Unlicense"
+
+
+[tool.poetry.dependencies]
+python = "^3.12"
+numpy = "^2.0.0"
+scipy = "^1.14.0"
+pygame = "^2.6.0"
+matplotlib = "^3.9.1"
+seaborn = "^0.13.2"
+scikit-learn = "^1.5.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
