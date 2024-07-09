@@ -37,35 +37,6 @@ class State:
     biases: Biases
 
 
-def normalize_obstable(obType: Obstacle) -> float:
-    if isinstance(obType, LargeCactus):
-        return 0.0
-    if isinstance(obType, SmallCactus):
-        return 0.0
-    if isinstance(obType, Bird):
-        return 1.0
-    # This is the starting value, it's just a placeholder
-    if obType == 2:
-        return 0.5
-    raise ValueError(f"Unknown obstacle type: {obType}")
-
-
-def relu(x):
-    return np.maximum(0, x)
-
-
-def squish_01(x: float) -> float:
-    """
-    Squish a [0, inf) value between 0 and 1.
-
-    Unlike the sigmoid function, this function is not symmetrical,
-    but it does use [0, 0.5) in the image.
-    """
-    if x < 0:
-        print(f"X passed to squish is {x=}")
-    return 1 - 1 / (x + 1)
-
-
 class NeuralNetwork(KeyClassifier):
     def __init__(self, state: State, activation_threshold=0.55, _print=False):
         # print(state)
@@ -75,12 +46,33 @@ class NeuralNetwork(KeyClassifier):
         self.activation_threshold = activation_threshold
         self._print = _print
 
+    @classmethod
+    def normalize_obstable(cls, obType: Obstacle) -> float:
+        if isinstance(obType, LargeCactus):
+            return 1.0
+        if isinstance(obType, SmallCactus):
+            return 1.0
+        if isinstance(obType, Bird):
+            return 0.0
+        # This is the starting value, it's just a placeholder
+        if obType == 2:
+            return 0.5
+        raise ValueError(f"Unknown obstacle type: {obType}")
+
+    @classmethod
+    def relu(cls, x):
+        return np.maximum(0, x)
+
+    @classmethod
+    def map_0inf_to_01(cls, x: int):
+        return 1 - np.e ** (-x / 100)
+
     def feedforward(self, inputs: np.ndarray[Any, np.dtype[np.float64]]) -> float:
         def sigmoid(x):
             return 1 / (1 + np.exp(-x))
 
-        hidden_layer = relu(np.dot(inputs, self.input_weights) + self.input_bias)
-        output_layer = relu(
+        hidden_layer = self.relu(np.dot(inputs, self.input_weights) + self.input_bias)
+        output_layer = self.relu(
             np.dot(hidden_layer, self.hidden_weights) + self.hidden_bias
         )
         return sigmoid(output_layer)[0]
@@ -96,18 +88,19 @@ class NeuralNetwork(KeyClassifier):
         nextObType,
     ):
         # Normalizing and treating inputs
-        obType = normalize_obstable(obType)
-        nextObType = normalize_obstable(nextObType)
+        obType = self.normalize_obstable(obType)
+        nextObType = self.normalize_obstable(nextObType)
         # Distance can be <0 when the first onscreen obstacle is behind Dino.
         # As I believe this is not relevant for the classifier, I clamp it down.
-        distance = relu(distance)
+        distance = self.relu(distance)
 
         # print(f"{speed=} {distance=} {nextObDistance=} {obHeight=} {nextObHeight}")
         # speed = squish_01(speed)
-        # nextObDistance = squish_01(nextObDistance)
-        # obHeight = squish_01(obHeight)
-        # nextObHeight = squish_01(nextObHeight)
-        # distance = squish_01(distance)
+        speed = self.map_0inf_to_01(speed)
+        distance = self.map_0inf_to_01(distance)
+        obHeight = self.map_0inf_to_01(obHeight)
+        nextObDistance = self.map_0inf_to_01(nextObDistance)
+        nextObHeight = self.map_0inf_to_01(nextObHeight)
 
         prediction = self.feedforward(
             np.array(
@@ -150,18 +143,19 @@ class SmallNeuralNetwork(NeuralNetwork):
         nextObType,
     ):
         # Normalizing and treating inputs
-        obType = normalize_obstable(obType)
-        nextObType = normalize_obstable(nextObType)
+        obType = self.normalize_obstable(obType)
+        # nextObType = self.normalize_obstable(nextObType)
         # Distance can be <0 when the first onscreen obstacle is behind Dino.
         # As I believe this is not relevant for the classifier, I clamp it down.
-        distance = relu(distance)
+        distance = self.relu(distance)
 
         # print(f"{speed=} {distance=} {nextObDistance=} {obHeight=} {nextObHeight}")
         # speed = squish_01(speed)
-        # nextObDistance = squish_01(nextObDistance)
-        # obHeight = squish_01(obHeight)
-        # nextObHeight = squish_01(nextObHeight)
-        # distance = squish_01(distance)
+        speed = self.map_0inf_to_01(speed)
+        distance = self.map_0inf_to_01(distance)
+        obHeight = self.map_0inf_to_01(obHeight)
+        # nextObDistance = self.map_0inf_to_01(nextObDistance)
+        # nextObHeight = self.map_0inf_to_01(nextObHeight)
 
         prediction = self.feedforward(
             np.array(
@@ -219,8 +213,8 @@ class SimulatedAnnealing:
     def __init__(
         self,
         initial_state: State,
-        temperature=100,
-        max_iter=1000,
+        temperature=400,
+        max_iter=10000,
         cooling_rate=0.005,
         states_per_iter=100,
         neural_network=NeuralNetwork,
@@ -266,8 +260,8 @@ class SimulatedAnnealing:
         biases = (perturb(state.biases[0]), perturb(state.biases[1]))
 
         new_state = State(input_weights, hidden_weights, biases)
-        print(new_state)
-        print(f"On temperature {self.temperature}")
+        # print(new_state)
+        # print(f"On temperature {self.temperature}")
         return new_state
 
     def score_to_energy(self, score: float) -> float:
@@ -338,7 +332,7 @@ class SimulatedAnnealing:
                     best_energy = current_energy
 
             # Cool down
-            self.exponential_cooling(epoch)
+            self.boltzmann_cooling(epoch)
         return best_state, energy_history
 
 
