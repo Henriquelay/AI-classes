@@ -309,7 +309,7 @@ def playGame(
     classifiercls: Type[KeyClassifier]
     | Callable[[Any], KeyClassifier] = KeySimplestClassifier,
     render=False,
-):
+) -> list[float]:
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles
     run = True
 
@@ -336,7 +336,7 @@ def playGame(
     for initial_state in initial_states:
         players.append(Dinosaur())
         players_classifier.append(classifiercls(initial_state))
-        solution_fitness.append(0)
+        solution_fitness.append(0.0)
         died.append(False)
 
     def score():
@@ -512,16 +512,14 @@ def gradient_ascent(state, max_time):
 def manyPlaysResultsTrain(
     rounds, solutions, classifiercls: Type[KeyClassifier] = KeySimplestClassifier
 ):
-    results = []
-
-    for round in range(rounds):
-        results += [playGame(solutions, classifiercls)]
+    results = [playGame(solutions, classifiercls) for _ in range(rounds)]
 
     npResults = np.asarray(results)
 
     mean_results = np.mean(npResults, axis=0) - np.std(
         npResults, axis=0
     )  # axis 0 calcula media da coluna
+    # mean_results = np.mean(npResults, axis=0)
     return mean_results
 
 
