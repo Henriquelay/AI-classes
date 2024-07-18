@@ -523,6 +523,26 @@ def manyPlaysResultsTrain(
     return mean_results
 
 
+def manyPlaysResultsComparison(
+    rounds: int, tups: list[tuple[Any, Type[KeyClassifier]]],
+    render=False
+) -> list[tuple[list[float], float]]:
+    def classifierstatefulfunc(state: Any) -> KeyClassifier:
+        if not hasattr(classifierstatefulfunc, "counter"):
+            classifierstatefulfunc.counter = -1
+        classifierstatefulfunc.counter = (classifierstatefulfunc.counter + 1) % len(
+            tups
+        )
+
+        return tups[classifierstatefulfunc.counter][1](state)
+
+    states = [s for s, _ in tups]
+    results = [playGame(states, classifierstatefulfunc, render) for _ in range(rounds)]
+    npResults = np.asarray(results)
+
+    return [(res, res.mean() - res.std()) for res in npResults.T]
+
+
 def manyPlaysResultsTest(
     rounds, best_solution, classifiercls: Type[KeyClassifier] = KeySimplestClassifier
 ):
@@ -535,6 +555,7 @@ def manyPlaysResultsTest(
 def main():
     initial_state = [(15, 250), (18, 350), (20, 450), (1000, 550)]
     best_state, _ = gradient_ascent(initial_state, 5000)
+    print(f"{best_state=}")
     res, value = manyPlaysResultsTest(30, best_state)
     npRes = np.asarray(res)
     print(res, npRes.mean(), npRes.std(), value)
