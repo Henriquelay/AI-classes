@@ -16,6 +16,8 @@ in
           seaborn
           scikit-learn
         ]))
+
+      texliveSmall
     ];
     shellHook = ''
       python3 app/Trab2_Henrique_Layber.py

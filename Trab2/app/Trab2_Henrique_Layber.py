@@ -752,18 +752,19 @@ if __name__ == "__main__":
 
     ## Small NeuralNetwork (3-2-1)
 
-    best_state, energy_history = SimulatedAnnealing(
-        initial_state=State.create(SmallNeuralNetwork),
-        neural_network=SmallNeuralNetwork,
-        time_limit_secs=60 * 60 * 12,
-        max_iter=1000,  # will likely reach 1000 way before 12hr
-    ).anneal()
+    # best_state, energy_history = SimulatedAnnealing(
+    #     initial_state=State.create(SmallNeuralNetwork),
+    #     neural_network=SmallNeuralNetwork,
+    #     time_limit_secs=60 * 60 * 12,
+    #     max_iter=1000,  # will likely reach 1000 way before 12hr
+    # ).anneal()
+    best_state = state_3000
 
     # energy_history = saved_energy_history
 
-    energy_history_expanded = []
-    for (energy, epoch), (_, nextepoch) in zip(energy_history, energy_history[1:]):
-        energy_history_expanded.extend([energy] * (nextepoch - epoch))
+    # energy_history_expanded = []
+    # for (energy, epoch), (_, nextepoch) in zip(energy_history, energy_history[1:]):
+    #     energy_history_expanded.extend([energy] * (nextepoch - epoch))
 
     # print(energy_history_expanded)
 
@@ -777,7 +778,7 @@ if __name__ == "__main__":
 
     sns.set_theme(style="darkgrid")
 
-    sns.lineplot(x=range(len(energy_history_expanded)), y=energy_history_expanded)
+    # sns.lineplot(x=range(len(energy_history_expanded)), y=energy_history_expanded)
 
     # Only for saved energy history
     # hightlight_epochs = [152, 153]
@@ -788,10 +789,10 @@ if __name__ == "__main__":
     #     label="Highlighted epochs",
     #     color="red",
     # )
-    plt.title("Energy history")
-    plt.xlabel("Epoch")
-    plt.ylabel("Energy")
-    plt.show()
+    # plt.title("Energy history")
+    # plt.xlabel("Epoch")
+    # plt.ylabel("Energy")
+    # plt.show()
 
     # print(best_state)
 
@@ -814,6 +815,7 @@ if __name__ == "__main__":
     play_rounds = 30
 
     my_results, simplest_results = manyPlaysResultsComparison(play_rounds, setup)
+    # print(my_results)
     prof_results = [
         1214.0,
         759.5,
